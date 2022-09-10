@@ -387,4 +387,48 @@ resource "aws_elb" "elb_ws" {
   }
 }
 
+# Definindo o DB Subnet Group do Banco de dados
+resource "aws_db_subnet_group" "sn_group" {
+  name = "subnet_group"
+  subnet_ids = [aws_subnet.sn_vpcwebmonitors_priv_1a.id, aws_subnet.sn_vpcwebmonitors_priv_1c.id]
+
+  tags = {
+    "Name" = "sn_group_db"
+  }
+}
+
+# Definindo o Parameter Group
+resource "aws_db_parameter_group" "parameter_group" {
+  name = "parameter-group"
+  family = "mysql8.0"
+
+  parameter {
+    name = "character_set_server"
+    value = "utf8"
+  }
+}
+
+# Criando a instância rds
+resource "aws_db_instance" "db_webmonitors" {
+  identifier = "dbwebmonitors"
+  engine = "mysql"
+  engine_version = "8.0.23"
+  instance_class = "db.t2.micro"
+  storage_type = "gp2"
+  allocated_storage = 20
+  max_allocated_storage = 0
+  monitoring_interval = 0
+  multi_az = true
+  name = "db_webmonitors"
+  username = "admin"
+  password = "webmonitors"
+  skip_final_snapshot = true
+  db_subnet_group_name = aws_db_subnet_group.sn_group.name
+  parameter_group_name = aws_db_parameter_group.parameter_group.name
+  vpc_security_group_ids = [aws_security_group.asg_rds.id]
+
+  tags = {
+    "Name" = "db_webmonitors"
+  }
+}
 
